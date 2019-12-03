@@ -1,0 +1,22 @@
+version: 2
+
+jobs:
+  deploy:
+    docker:
+      - image: jenkinsrise/cci-v2-docker-java8-gcloud:0.0.1
+    working_directory: ~/cors-filter
+
+    steps:
+      - checkout
+      - run: git config --global user.name $JENKINS_USERNAME
+      - run: git config --global user.email $JENKINS_EMAIL
+      - add_ssh_keys:
+          fingerprints:
+            - "3f:e3:b8:f5:9e:58:a8:e0:70:03:38:58:4f:62:9a:97"
+      - run: mvn deploy
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - deploy
