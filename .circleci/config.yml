@@ -1,11 +1,17 @@
 version: 2
 
 jobs:
-  deploy:
-    docker:
+  test:
+    docker: &BUILDIMAGE
       - image: jenkinsrise/cci-v2-docker-java8-gcloud:0.0.1
     working_directory: ~/cors-filter
+    steps:
+      - checkout
+      - run: mvn test
 
+  deploy:
+    docker: *BUILDIMAGE
+    working_directory: ~/cors-filter
     steps:
       - checkout
       - run: git config --global user.name $JENKINS_USERNAME
@@ -21,4 +27,7 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
+      - test
       - deploy
+          requires:
+            - test
