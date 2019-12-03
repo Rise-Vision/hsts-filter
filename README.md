@@ -5,7 +5,7 @@
 The HSTS Filter is a servlet filter used to add the [Strict-Transport-Security header](https://tools.ietf.org/html/draft-ietf-websec-strict-transport-sec-14#section-6.1) to HTTPS requests.
 
 ## Built With
-- Java (1.8) 
+- Java (1.8)
 - Maven
 - [Wagon-Git](https://github.com/synergian/wagon-git)
 - [Mockito](https://github.com/mockito/mockito)
@@ -23,12 +23,12 @@ mvn verify
 ```
 
 ### Dependencies
-* Junit for testing 
+* Junit for testing
 * Mockito for mocking and testing
 * Wagon-Git for releasing the artifacts to [Rise Vision Maven Repository](https://github.com/Rise-Vision/mvn-repo)
 
 ### Usage
-* Add CORS filter as dependency to your project 
+* Add CORS filter as dependency to your project
 
 ```xml
 
@@ -64,7 +64,7 @@ mvn verify
 <!-- In the <dependencies> section of your project's pom.xml -->
 <dependency>
   <!-- From our private repo -->
-  <groupId>com.risevision.cors</groupId>
+  <groupId>com.risevision.hsts</groupId>
   <artifactId>hsts-filter</artifactId>
   <version>1.0.0</version>
 </dependency>
