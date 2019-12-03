@@ -10,9 +10,11 @@ jobs:
       - checkout
       - run: git config --global user.name $JENKINS_USERNAME
       - run: git config --global user.email $JENKINS_EMAIL
-      - add_ssh_keys:
-          fingerprints:
-            - "3f:e3:b8:f5:9e:58:a8:e0:70:03:38:58:4f:62:9a:97"
+      - run: mkdir -p ~/.ssh
+      - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      - run: git clone git@github.com:Rise-Vision/private-keys.git
+      - run: cp private-keys/mvn-repo/mvn-repo-deploy-key* ~/.ssh/*
+      - run: cat ~/.ssh/mvn-repo-deploy-key.pub | tee -a ~/.ssh/authorized_keys
       - run: mvn deploy
 
 workflows:
