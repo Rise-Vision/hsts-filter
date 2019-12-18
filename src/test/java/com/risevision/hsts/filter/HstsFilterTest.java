@@ -2,8 +2,12 @@ package com.risevision.hsts.filter;
 
 import static com.risevision.hsts.filter.Globals.HSTS_HEADER;
 import static com.risevision.hsts.filter.Globals.HSTS_ONE_YEAR;
+import static com.risevision.hsts.filter.Globals.ORIGIN_HEADER;
+import static com.risevision.hsts.filter.Globals.REFERER_HEADER;
+import static com.risevision.hsts.filter.Globals.SKIP_REFERRERS_PARAM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -14,6 +18,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +48,7 @@ public class HstsFilterTest {
   @Mock private HttpServletRequest request;
   @Mock private HttpServletResponse response;
   @Mock private FilterChain chain;
+  @Mock private FilterConfig filterConfig;
 
   @Before public void setUp() {
     MockitoAnnotations.initMocks(this);
@@ -79,6 +85,62 @@ public class HstsFilterTest {
   }
 
   @Test
+  public void extractsHttpServerName() {
+    String referrer = "http://storage.rvaserver2.appspot.com/servertask";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertEquals("storage.rvaserver2.appspot.com", serverName);
+  }
+
+  @Test
+  public void extractsHttpsServerName() {
+    String referrer = "https://storage.rvaserver2.appspot.com/servertask";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertEquals("storage.rvaserver2.appspot.com", serverName);
+  }
+
+  @Test
+  public void extractsSimpleServerName() {
+    String referrer = "http://rvaserver2.appspot.com";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertEquals("rvaserver2.appspot.com", serverName);
+  }
+
+  @Test
+  public void extractsLocalHostServerName() {
+    String referrer = "http://localhost/onboarding";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertEquals("localhost", serverName);
+  }
+
+  @Test
+  public void extractsLocalHostServerNameWithPort() {
+    String referrer = "http://localhost:8000/onboarding";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertEquals("localhost", serverName);
+  }
+
+  @Test
+  public void extractsServerNameWithLongPath() {
+    String referrer = "https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.02/filesDuplicate";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertEquals("storage-dot-rvaserver2.appspot.com", serverName);
+  }
+
+  @Test
+  public void dontExtractServerNameFromInvalidUrls() {
+    String referrer = "storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.02/filesDuplicate";
+    String serverName = HstsFilter.extractServerNameFrom(referrer);
+
+    assertNull(serverName);
+  }
+
+  @Test
   public void addsHstsHeaderToHttpsRequest()
   throws IOException, ServletException {
     given(request.getScheme()).willReturn("https");
@@ -96,6 +158,23 @@ public class HstsFilterTest {
     given(request.getScheme()).willReturn("http");
 
     HstsFilter filter = new HstsFilter();
+    filter.doFilter(request, response, chain);
+
+    verifyZeroInteractions(response);
+    verify(chain).doFilter(request, response);
+  }
+
+  @Test
+  public void doesntAddHstsHeaderToHttpsRequestIfReferrerIsSkipped()
+  throws IOException, ServletException {
+    String referrer = "http://apps.risevision.com";
+
+    given(request.getScheme()).willReturn("https");
+    given(request.getHeader(REFERER_HEADER)).willReturn(referrer);
+    given(filterConfig.getInitParameter(SKIP_REFERRERS_PARAM)).willReturn("apps.risevision.com");
+
+    HstsFilter filter = new HstsFilter();
+    filter.init(filterConfig);
     filter.doFilter(request, response, chain);
 
     verifyZeroInteractions(response);
