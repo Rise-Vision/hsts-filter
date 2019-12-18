@@ -2,11 +2,16 @@ package com.risevision.hsts.filter;
 
 import static com.risevision.hsts.filter.Globals.HSTS_HEADER;
 import static com.risevision.hsts.filter.Globals.HSTS_ONE_YEAR;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.function.Predicate;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -18,13 +23,59 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class HstsFilterTest {  
+public class HstsFilterTest {
+
+  private static final Predicate<ServerNameMatcher> MATCHES_APPS =
+    matcher -> matcher.test("apps.risevision.com");
+  private static final Predicate<ServerNameMatcher> MATCHES_APPS_STAGE =
+    matcher -> matcher.test("apps-stage-7.risevision.com");
+  private static final Predicate<ServerNameMatcher> MATCHES_RVA_USER =
+    matcher -> matcher.test("rvauser.risevision.com");
+  private static final Predicate<ServerNameMatcher> MATCHES_RVA_USER2 =
+    matcher -> matcher.test("rvauser2.appspot.com");
+  private static final Predicate<ServerNameMatcher> MATCHES_RVA_USER2_TEST =
+    matcher -> matcher.test("1-07-021.rvauser2.appspot.com");
+  private static final Predicate<ServerNameMatcher> MATCHES_RVA_USER2_STAGE =
+    matcher -> matcher.test("in-app-test-dot-rvauser2.appspot.com");
+  private static final Predicate<ServerNameMatcher> MATCHES_OTHER =
+    matcher -> matcher.test("www.apache.org");
+
   @Mock private HttpServletRequest request;
   @Mock private HttpServletResponse response;
   @Mock private FilterChain chain;
 
   @Before public void setUp() {
     MockitoAnnotations.initMocks(this);
+  }
+
+  @Test
+  public void createsSimpleServerNameMatcher() {
+    String param = "\n   apps.risevision.com\n    ";
+    List<ServerNameMatcher> origins = HstsFilter.toServerNameMatcherList(param);
+
+    assertEquals(1, origins.size());
+    assertTrue(origins.stream().anyMatch(MATCHES_APPS));
+    assertFalse(origins.stream().anyMatch(MATCHES_APPS_STAGE));
+    assertFalse(origins.stream().anyMatch(MATCHES_RVA_USER));
+    assertFalse(origins.stream().anyMatch(MATCHES_RVA_USER2_TEST));
+    assertFalse(origins.stream().anyMatch(MATCHES_RVA_USER2_STAGE));
+    assertFalse(origins.stream().anyMatch(MATCHES_RVA_USER2));
+    assertFalse(origins.stream().anyMatch(MATCHES_OTHER));
+  }
+
+  @Test
+  public void createsMultipleServerNameMatcher() {
+    String param = "\n   *.risevision.com\n   *rvauser.appspot.com\n   *rvauser2.appspot.com\n    ";
+    List<ServerNameMatcher> origins = HstsFilter.toServerNameMatcherList(param);
+
+    assertEquals(3, origins.size());
+    assertTrue(origins.stream().anyMatch(MATCHES_APPS));
+    assertTrue(origins.stream().anyMatch(MATCHES_APPS_STAGE));
+    assertTrue(origins.stream().anyMatch(MATCHES_RVA_USER));
+    assertTrue(origins.stream().anyMatch(MATCHES_RVA_USER2_TEST));
+    assertTrue(origins.stream().anyMatch(MATCHES_RVA_USER2_STAGE));
+    assertTrue(origins.stream().anyMatch(MATCHES_RVA_USER2));
+    assertFalse(origins.stream().anyMatch(MATCHES_OTHER));
   }
 
   @Test
