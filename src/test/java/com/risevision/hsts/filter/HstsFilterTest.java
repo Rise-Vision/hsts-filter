@@ -1,7 +1,7 @@
 package com.risevision.hsts.filter;
 
-import static com.risevision.hsts.filter.HstsFilter.HSTS_HEADER;
-import static com.risevision.hsts.filter.HstsFilter.HSTS_ONE_YEAR;
+import static com.risevision.hsts.filter.Globals.HSTS_HEADER;
+import static com.risevision.hsts.filter.Globals.HSTS_ONE_YEAR;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;

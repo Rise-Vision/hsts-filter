@@ -1,5 +1,7 @@
 package com.risevision.hsts.filter;
 
+import static com.risevision.hsts.filter.Globals.*;
+
 import java.io.IOException;
 
 import javax.servlet.Filter;
@@ -11,10 +13,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 
 public class HstsFilter implements Filter {
-
-  static final String HTTPS_SCHEME = "https";
-  static final String HSTS_HEADER = "Strict-Transport-Security";
-  static final String HSTS_ONE_YEAR = "max-age=31536000";
 
   @Override
   public void init(FilterConfig config) throws ServletException {}
