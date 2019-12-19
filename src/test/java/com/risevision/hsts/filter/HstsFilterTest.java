@@ -181,4 +181,38 @@ public class HstsFilterTest {
     verify(chain).doFilter(request, response);
   }
 
+  @Test
+  public void doesntAddHstsHeaderToHttpsRequestIfOriginIsSkipped()
+  throws IOException, ServletException {
+    String origin = "http://apps.risevision.com";
+
+    given(request.getScheme()).willReturn("https");
+    given(request.getHeader(ORIGIN_HEADER)).willReturn(origin);
+    given(filterConfig.getInitParameter(SKIP_REFERRERS_PARAM)).willReturn("apps.risevision.com");
+
+    HstsFilter filter = new HstsFilter();
+    filter.init(filterConfig);
+    filter.doFilter(request, response, chain);
+
+    verifyZeroInteractions(response);
+    verify(chain).doFilter(request, response);
+  }
+
+  @Test
+  public void addsHstsHeaderToHttpsRequestIfReferrerIsNotSkipped()
+  throws IOException, ServletException {
+    String referrer = "http://apps.risevision.com";
+
+    given(request.getScheme()).willReturn("https");
+    given(request.getHeader(REFERER_HEADER)).willReturn(referrer);
+    given(filterConfig.getInitParameter(SKIP_REFERRERS_PARAM)).willReturn("www.risevision.com");
+
+    HstsFilter filter = new HstsFilter();
+    filter.init(filterConfig);
+    filter.doFilter(request, response, chain);
+
+    verify(response).addHeader(HSTS_HEADER, HSTS_ONE_YEAR);
+    verify(chain).doFilter(request, response);
+  }
+
 }
