@@ -66,7 +66,7 @@ mvn verify
   <!-- From our private repo -->
   <groupId>com.risevision.hsts</groupId>
   <artifactId>hsts-filter</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
 </dependency>
 
 <!-- ... -->
@@ -117,3 +117,49 @@ mvn verify
 ```
 mvn clean test -U
 ```
+
+* Add the filter to your WEB-INF/web.xml file, and map the URLs that should point to it:
+
+```xml
+  <filter>
+    <filter-name>HstsFilter</filter-name>
+    <filter-class>com.risevision.hsts.filter.HstsFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>HstsFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+```
+
+In this basic configuration, the filter adds the HSTS header to any HTTPS 
+request, and never adds headers to HTTP requests.
+
+If there are referrers for which the HSTS header doesn't have to be added, it
+can be specified using the *skip-referrers* init param as follows:
+
+```xml
+  <filter>
+    <filter-name>HstsFilter</filter-name>
+    <filter-class>com.risevision.hsts.filter.HstsFilter</filter-class>
+  </filter>
+    <init-param>
+      <param-name>skip-referrers</param-name>
+      <param-value>
+        rva.risevision.com
+        rva-test.risevision.com
+        *rvaserver2.risevision.com
+        *rvauser.appspot.com
+        *rvauser2.appspot.com
+      </param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>HstsFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+```
+
+URLs such as 'rva.risevision.com' are exact HTTP or HTTPS matches;
+while URLs that start with '*' such as '*rvaserver2.appspot.com' can match any HTTP 
+or HTTPS requests that end with rvaserver2.appspot.com ( rvaserver2.appspot.com,
+storage-dot-rvaserver2.appspot.com, storage.rvaserver2.appspot.com, etc. ).
